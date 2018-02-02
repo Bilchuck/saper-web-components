@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <style>
+            .board__grid {
+                display: inline-block;
+                margin: 0 !important;
+                border: 1px solid #777;
+            }
+        </style>
+        <link rel="import" href="static/saper-col/saper-col.html">
+    </head>
+    <body>
+        <style>
+            .saper-row {
+                margin-bottom: 5px;
+            }
+        </style>
+        <label>
+            <input type="checkbox" id="isFlag">
+            Use click for flag
+        </label>
+        <div id="board"></div>
+
+        <script>
+            const boardEl = document.getElementById('board');
+            const isFlag = () => document.getElementById('isFlag').checked;
+            let field;
+            let socket;
+
+            const makeField = size => {
+                const f = _ => new Array(size).fill(null);
+                return f().forEach(f);
+            }
+            const renderCol = col => {
+                const saperCol = document.createElement('saper-col')
+                saperCol.setAttribute('value', col);
+                return saperCol;
+            }
+            const renderRow = cols => {
+                const row = document.createElement('div');
+                row.classList.add('saper-row');
+                cols.forEach(
+                    col => row.appendChild(renderCol(col))
+                );
+                return row;
+            }
+            const renderField = (field, l = field.length) => {
+                field.forEach(
+                    row => boardEl.appendChild(renderRow(row))
+                )
+            }
+
+            const attachEvents = () => {
+                const forEach = (arr, ...args) => Array.prototype.forEach.apply((arr || []), args);
+                forEach(document.getElementsByClassName('saper-row'), (row, x) => {
+                    forEach(row.getElementsByTagName('saper-col'), (col, y) => {
+                        col.addEventListener('click', _ => {
+                            socket.send(JSON.stringify({
+                                x,
+                                y,
+                                flag: isFlag()
+                            }));
+                            console.log(`Click on [${x}: ${y}]`);
+                        });
+                    });
+                });
+            }
+
+            const cleanField = () => {
+                boardEl.innerHTML = '';
+            }
+
+            const initRender = () => {
+                cleanField();
+                renderField(field);
+                attachEvents();
+            }
+            const initConnection = () => {
+                socket = new WebSocket("ws://localhost:8080/ws");
+                socket.addEventListener('open', function (event) {
+                    return false;
+                });
+                socket.addEventListener('close', function (event) {
+                    console.warn(`connection closed`);
+                });
+                // Listen for messages
+                socket.addEventListener('message', function (event) {
+                    const json = JSON.parse(event.data);
+                    field = json.field;
+                    initRender();
+                    return false;
+                });
+            }
+            initConnection();
+        </script>
+        </body>
+    </body>
+</html>

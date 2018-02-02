@@ -1,0 +1,97 @@
+<!DOCTYPE HTML>
+<html>
+    <head></head>
+    <body>
+        <template id="tmpl">
+            <!-- View -->
+            <style>
+                #wrap {
+                    width: 20px;
+                    height: 20px;
+                    text-align: center;
+                    display: inline-block;
+                    font-size: 16px;
+                    font-family: sans-serif;
+                    vertical-align: top;
+                    cursor: pointer;
+                    margin: 0 !important;
+                    box-sizing: border-box;
+                }
+                #value {
+                    vertical-align: middle;
+                }
+                .num {
+                    color: blue;
+                    background: #999;
+                }
+                .closed {
+                    background: #555;
+                    border-left: 2px solid #333;
+                    border-top: 2px solid #333;
+                    cursor: pointer;
+                }
+                .empty {
+                    background: #ccc;
+                }
+                .bomb {
+                    background: #b83636;
+                    color: #fff;
+                }
+                .flag {
+                    background: rgb(51, 128, 152);
+                }
+            </style>
+            <span id="wrap">
+                <span id="value"></span>
+            </span>
+        </template>
+        <!--  Controller -->
+        <script>
+            const init = () => {
+                const lDocument = document.currentScript.ownerDocument;
+                const tmpl = lDocument.getElementById('tmpl');
+            
+                class SaperColEl extends HTMLElement {
+                    render() {
+                        if (this.__value > 0) {
+                            this.valueEl.innerHTML = this.__value;
+                        }
+                        this.wrapEl.setAttribute('class', this.className);
+                    }
+                    get className () {
+                        switch (this.__value) {
+                            case '*': return 'bomb'; break;
+                            case 'f': return 'flag'; break;
+                            case '0': return 'empty'; break;
+                            case 'null': return 'closed'; break;
+                            // numbers
+                            default: return 'num'; break;
+                        }
+                    }
+                    createdCallback() {
+                        this.root = this.createShadowRoot();
+                        this.root.appendChild(tmpl.content.cloneNode(true));
+                        this.wrapEl = this.root.getElementById('wrap');
+                        this.valueEl = this.root.getElementById('value');
+                    }
+                    onClick() {
+                        this.root.dispatchEvent(new Event('click'));
+                    }
+                    attributeChangedCallback() {
+                        this.__value = (this.getAttribute('value') || 'null');
+                        const onClick = this.onClick.bind(this);
+                        if (this.__value) {
+                            this.wrapEl.addEventListener('click', onClick);
+                        } else {
+                            this.wrapEl.removeEventListener('click', onClick)
+                        }
+                        this.render();
+                    }
+                };
+            
+                document.registerElement('saper-col', SaperColEl);
+            }
+            init();
+        </script>
+    </body>
+</html>
