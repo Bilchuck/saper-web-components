@@ -76,6 +76,7 @@
                 attachEvents();
             }
             const initConnection = () => {
+                const PORT = window.location.href.includes('localhost') ? 8080 : 19933;
                 socket = new WebSocket("ws://localhost:8080/ws");
                 socket.addEventListener('open', function (event) {
                     return false;
