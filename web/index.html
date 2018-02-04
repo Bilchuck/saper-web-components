@@ -24,7 +24,6 @@
         <script>
             const boardEl = document.getElementById('board');
             const isFlag = () => document.getElementById('isFlag').checked;
-            let field;
             let socket;
 
             const makeField = size => {
@@ -54,7 +53,7 @@
                 const forEach = (arr, ...args) => Array.prototype.forEach.apply((arr || []), args);
                 forEach(document.getElementsByClassName('saper-row'), (row, x) => {
                     forEach(row.getElementsByTagName('saper-col'), (col, y) => {
-                        col.addEventListener('click', _ => {
+                        col.addEventListener('opencol', _ => {
                             socket.send(JSON.stringify({
                                 x,
                                 y,
@@ -66,18 +65,13 @@
                 });
             }
 
-            const cleanField = () => {
-                boardEl.innerHTML = '';
-            }
-
-            const initRender = () => {
-                cleanField();
+            const initRender = field => {
                 renderField(field);
                 attachEvents();
             }
             const initConnection = () => {
                 const PORT = window.location.href.includes('localhost') ? 8080 : 19933;
-                socket = new WebSocket("ws://localhost:8080/ws");
+                socket = new WebSocket("ws://localhost:8080/ws/");
                 socket.addEventListener('open', function (event) {
                     return false;
                 });
@@ -87,9 +81,19 @@
                 // Listen for messages
                 socket.addEventListener('message', function (event) {
                     const json = JSON.parse(event.data);
-                    field = json.field;
-                    initRender();
+                    if (json.field) {
+                        initRender(json.field);
+                    } else if (json.changes) {
+                        changeCol(json.changes);
+                    }
                     return false;
+                });
+            }
+            const changeCol = (changes) => {
+                changes.forEach(({x,y,value}) => {
+                    const row = document.getElementsByClassName('saper-row')[x];
+                    const col = row.getElementsByTagName('saper-col')[y];
+                    col.setAttribute('value', value);
                 });
             }
             initConnection();

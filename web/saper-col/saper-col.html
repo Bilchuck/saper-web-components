@@ -75,7 +75,7 @@
                         this.valueEl = this.root.getElementById('value');
                     }
                     onClick() {
-                        this.root.dispatchEvent(new Event('click'));
+                        this.root.dispatchEvent(new Event('opencol'));
                     }
                     attributeChangedCallback() {
                         this.__value = (this.getAttribute('value') || 'null');

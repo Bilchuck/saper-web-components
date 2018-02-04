@@ -71,11 +71,49 @@ const logField = field => {
     }
     console.log("-----------------");
 }
-logField(makeField());
-logField(makeField());
-logField(makeField());
+const makeChange = ({x,y,field, oldField}) => {
+    oldField[x][y] = field[x][y];
+    return {
+        changes: [{x,y,value: oldField[x][y]}],
+        newField: {...oldField},
+    };
+}
+const getEmptyNeighbours = (x,y,field) => {
+    const isSafe = ([x,y]) => [x,y].every(v => v === Math.min(Math.max(v,0), SIZE - 1));
+    return [
+        [x+1, y], 
+        [x, y+1], 
+        [x-1, y], 
+        [x, y-1], 
+        [x+1, y+1], 
+        [x-1, y-1], 
+        [x+1, y-1], 
+        [x-1, y+1]
+    ]
+    .filter(isSafe)
+    .map(([x,y]) => ({x,y}))
+    .filter(({x,y}) => field[x][y] === EMPTY_C)
+    .reduce((acc, cur) => acc = [...acc, {x:cur.x, y: cur.y}, ...getEmptyNeighbours(cur.x, cur.y, field)], [])
+}
+const makeStep = ({x,y,field, oldField}) => {
+    const v = field[x][y];
+    if (v !== EMPTY_C) {
+        return makeChange({x,y,field, oldField});
+    } else {
+        const emptyNeighbours = [{x,y}, ...getEmptyNeighbours(x,y,field)];
+        let changes = [];
+        let newField = oldField;
+        for (col of emptyNeighbours) {
+            const change = makeChange(col.x, col.y, field, oldField);
+            newField = change.newField;
+            chenges = [...changes, ...change.changes].map(({x,y}) => ({x,y,value: EMPTY_C}));
+        }
+        return {changes, newField};
+    }
+}
 
 module.exports = {
     makeField,
     closedField,
+    makeStep,
 };
